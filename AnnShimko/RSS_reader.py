@@ -1,11 +1,14 @@
-import subprocess
-import sys
-import os
-from datetime import datetime
-import urllib.request
-import json
-import argparse
-import logging
+try:
+    import subprocess
+    import sys
+    import os
+    from datetime import datetime
+    import urllib.request
+    import json
+    import argparse
+    import logging
+except Exception as error:
+    exit(f'Module import error occured: {error} \nExit to prevent further errors')
 
 try:
     from dateutil.parser import parse
@@ -22,6 +25,12 @@ try:
 except ModuleNotFoundError as error:
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'bs4'])
     from bs4 import BeautifulSoup
+
+try:
+    import lxml
+except ModuleNotFoundError as error:
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'lxml'])
+    import lxml
 
 
 def exception_wrapper(exit_mode=True):
@@ -46,11 +55,12 @@ def exception_wrapper(exit_mode=True):
 def get_args():
     """ Unpacks arguments from command line and returns them as "args" object."""
     parser = argparse.ArgumentParser(description='Parses an RSS feed')
-    parser.add_argument('source', type=str, help='a source for parsing')
-    parser.add_argument('--version', action='version', version='%(prog)s 1.0')
+    parser.add_argument('--source', type=str, help='a source for parsing')
+    parser.add_argument('--version', action='version', version='%(prog)s 3.0')
     parser.add_argument('--json', action='store_true', help='write collected feed into json file')
     parser.add_argument('--verbose', action='store_true', help='verbose status message')
     parser.add_argument('--limit', type=int, help='Limit of news in feed. In case of None Limit all feed is provided')
+    parser.add_argument('--date', type=str, help='Provide news for this date in YYYYMMDD format')
     args = parser.parse_args()
     if args.limit and args.limit <= 0:
         exit("Error: wrong --limit argument, limit value should be positive number")
@@ -88,16 +98,59 @@ def cache_feed(allnews, source):
             cache_dict.update({'Description': BeautifulSoup(entry.description.text, 'html.parser').text})
             if BeautifulSoup(entry.description.text, 'html.parser').img:
                 URL = BeautifulSoup(entry.description.text, "html.parser").img["src"]
-                cache_dict['Image source'].append(URL)
+                img_file = f'images/{URL.strip("https://").replace("/", "").replace(":", "")}'
+                if not os.path.isfile(img_file):
+                    urllib.request.urlretrieve(URL, img_file)
+                cache_dict['Image source'].append((URL, img_file))
 
         if entry.find('media:content'):
             for item in str(entry.find('media:content')).split():
                 if 'url' in item:
                     URL = item.strip('url="').strip('"')
-            cache_dict['Image source'].append(URL)
+            img_file = f'images/{URL.strip("https://").replace("/", "").replace(":", "")}'
+            if not os.path.isfile(img_file):
+                urllib.request.urlretrieve(URL, img_file)
+            cache_dict['Image source'].append((URL, img_file))
 
         cache_list.append(cache_dict)
     return cache_list
+
+
+@exception_wrapper()
+def cache_update(allnews, source, cache_file='cache.json'):
+    """Creates new cache file from current RSS if no cache file exists
+    or compares existing cache with current feed and adds new items"""
+    cache = tuple(cache_feed(allnews, source))
+    if not os.path.isfile(cache_file):
+        with open(cache_file, 'w', encoding='utf-8') as file:
+            json.dump(cache, file, indent=4, ensure_ascii=False)
+    else:
+        with open(cache_file, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+
+        for record in cache:
+            if record not in data:
+                data.append(record)
+        with open(cache_file, 'w', encoding='utf-8') as file:
+            json.dump(data, file, indent=4, ensure_ascii=False)
+
+
+@exception_wrapper()
+def read_cache(source=None, date=None, limit=None, cache_file='cache.json'):
+    """Downloads cached feed from cache.json file"""
+    news = []
+    if not os.path.isfile(cache_file):
+        print("Unfortunately, there's no cached news yet")
+    else:
+        with open(cache_file, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+        for record in data:
+            if source:
+                if record['Published'].replace('-', '') == date and record['RSS link'] == source:
+                    news.append(record)
+            elif record['Published'].replace('-', '') == date:
+                news.append(record)
+    return news[:limit]
 
 
 @exception_wrapper()
@@ -116,7 +169,13 @@ def write_feed(feed_list, writing_mode=None):
 
         with open(file_name, "w", encoding='utf8') as file:
             json.dump(feed_list, file, ensure_ascii=False, indent=4)
-        print(feed_list)
+        print('[')
+        for entry in feed_list:
+            print(" {")
+            for key, value in entry.items():
+                print(f"  '{key}':'{value}'")
+            print(' },')
+        print(']')
     else:
         if feed_list != []:
             for news in feed_list:
@@ -124,8 +183,7 @@ def write_feed(feed_list, writing_mode=None):
                     if key != 'Image source':
                         print(f'{key + ":":<15} {value}')
                     else:
-                        for link in value:
-                            print(f'{key + ":":<15} {link}')
+                        print(f'{key + ":":<15} {value[0][0]}')
                     if key == 'RSS link':
                         print()
                 print()
@@ -136,25 +194,25 @@ def write_feed(feed_list, writing_mode=None):
 
 @exception_wrapper()
 def main_block():
-    """Declares global variables.
-    Takes arguments from commandline using get_args function.
-    Creates logger.
-    Parses news and displays them in proper format in stdout (text or json ),
-    as well as .json file is being created while args.json option is set."""
-
+    """Declares global variables, sets modes of the App, calls inner functions of the program"""
     global args
     global logger
-
+    if not os.path.exists('images'):
+        os.makedirs('images')
     args = get_args()
-
     if args.verbose:
         logging.basicConfig(level='NOTSET', stream=sys.stdout)
         logger = logging.getLogger()
     else:
         logging.basicConfig(level=80)
 
-    allnews = parse_news(args.source)
-    feed_list = cache_feed(allnews, args.source)[:args.limit]
+    if args.date:
+        feed_list = read_cache(source=args.source, date=args.date, limit=args.limit)
+    else:
+        allnews = parse_news(args.source)
+        feed_list = cache_feed(allnews, args.source)[:args.limit]
+        cache_update(allnews, args.source)
+
     write_feed(feed_list, args.json)
 
 
