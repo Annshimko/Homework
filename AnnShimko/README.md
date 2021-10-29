@@ -1,6 +1,6 @@
 ﻿RSS_reader.py is a one-shot RSS-parser a command-line utility which receives RSS URL and prints results in human-readable format.
 An exaple of the result is displayed below:
-verion 3.0
+version 4.0
 
 $ RSS_reader.py https://onliner.by/feed
 
@@ -30,6 +30,8 @@ optional arguments:
   --limit LIMIT  Limits news topics if this parameter provided
   --date DATE 	 provides the possibility to search cached news by date in %Y%m%d format,
 		 if no --source argument provided, searches by date through all sources in cache.
+  --tohtml	 converts the feed into html format
+  --topdf	 converts the feed into pdf format
   
 In case of using --json argument utility converts the news into JSON format. 
 JSON structure of data in this case is the following:
@@ -54,7 +56,6 @@ g, а полная научная статья опубликована в жу�
 	},
 	..
 ]
-
 With the argument --verbose set the program prints logs in stdout.
 
 There's news caching function implemented in version 3.0. News are kept in a local storage in cache.json file in JSON data format.
@@ -62,11 +63,17 @@ While reading the feed once, all news feed is being cached.
 Later, during RSS_reader execution existing cache is compared with the feed and upcoming news is added. 
 Simultaneously, feed images are cached into "images" folder.
 
-Using --date argument news can be search by date from cache.
+Using --date argument news can be searched by date from cache. The date should be provided in %Y%m%d format, for example: 20211029.
+If no --source provided, the search is performed through all sources for this date. 
+--date mode works with files, stored in local folders created while news caching.
+--date mode doesn't requre Internet connection.
+
+--tohtml and --topdf arguments allows to convert the feed into html and pdf formats correspondingly, including images in the body of the news field.
+
 
 Installation and setup:
 
 Windows:
-C:\Users\...\dist> py -3 -m pip install RSS_reader-3.0.tar.gz
+C:\Users\...\dist> py -3 -m pip install RSS_reader-4.0.tar.gz
 Unix-like OS:
-.../dist$ sudo python3 -m pip install RSS_reader-3.0.tar.gz
+.../dist$ sudo python3 -m pip install RSS_reader-4.0.tar.gz
