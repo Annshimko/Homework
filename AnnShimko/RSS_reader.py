@@ -1,29 +1,26 @@
-try:
-    import subprocess
-    import sys
-    import os
-    from datetime import datetime
-    import urllib.request
-    import json
-    import argparse
-    import logging
-except Exception as error:
-    exit(f'Module import error occured: {error} \nExit to prevent further errors')
+import subprocess
+import sys
+import os
+from datetime import datetime
+import urllib.request
+import json
+import argparse
+import logging
 
 try:
     from dateutil.parser import parse
 except ModuleNotFoundError as error:
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install', dateutil.parser])
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'dateutil.parser'])
     from dateutil.parser import parse
 try:
     import requests
 except ModuleNotFoundError as error:
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install', requests])
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'requests'])
     import requests
 try:
     from bs4 import BeautifulSoup
 except ModuleNotFoundError as error:
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install', bs4])
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'bs4'])
     from bs4 import BeautifulSoup
 
 

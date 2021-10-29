@@ -1,6 +1,6 @@
-RSS_reader.py is a one-shot RSS-parser a command-line utility which receives RSS URL and prints results in human-readable format.
+﻿RSS_reader.py is a one-shot RSS-parser a command-line utility which receives RSS URL and prints results in human-readable format.
 An exaple of the result is displayed below:
-verion 1.0
+verion 1.1
 
 $ RSS_reader.py https://onliner.by/feed
 
