@@ -1,10 +1,12 @@
-from unittest import TestCase, main
-from RSS_reader import get_args, convert2html, cache_feed, write_feed, read_cache, convert2pdf
-from bs4 import BeautifulSoup
-from test_data import RSS, CACHE
-import shutil
-import os
 import filecmp
+import os
+import shutil
+from unittest import TestCase, main
+
+from bs4 import BeautifulSoup
+
+from .test_data import RSS, CACHE
+from ..rss_reader.RSS_reader import get_args, convert2html, cache_feed, write_feed, read_cache, convert2pdf
 
 
 class RssReaderTest(TestCase):
@@ -27,21 +29,22 @@ class RssReaderTest(TestCase):
 
     def test_read_cache(self):
         Title = 'В России сделали вакцину «Спутник», которую надо закапывать в нос'
-        self.assertEqual(read_cache(None, '20211026', 1, 'test_cache.json')[0]['Title'], Title)
+        self.assertEqual(read_cache(None, '20211026', 1, 'RSS_reader/tests/test_cache.json')[0]['Title'], Title)
 
     def test_convert_html(self):
-        shutil.rmtree('html_files')
+        shutil.rmtree('html_files', ignore_errors=True)
         convert2html(CACHE)
         files = os.listdir('html_files')
         assert len(files) == 1
-        assert filecmp.cmp('test_news_feed.html', f'html_files/{files[0]}')
+        assert filecmp.cmp('RSS_reader/tests/test_news_feed.html', f'html_files/{files[0]}')
 
     def test_convert_pdf(self):
-        shutil.rmtree('pdf_files')
+        shutil.rmtree('pdf_files', ignore_errors=True)
         convert2pdf(CACHE)
         files = os.listdir('pdf_files')
         assert len(files) == 1
         # assert filecmp.cmp('test_news_feed.pdf', f'pdf_files/{files[0]}')
+
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,6 @@
+python-dateutil
+requests
+bs4
+lxml
+json2html
+reportlab

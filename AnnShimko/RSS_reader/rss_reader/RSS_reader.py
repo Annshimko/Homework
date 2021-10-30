@@ -9,7 +9,6 @@ import json
 import argparse
 import logging
 
-
 try:
     from dateutil.parser import parse
 except ModuleNotFoundError as error:
@@ -27,7 +26,7 @@ except ModuleNotFoundError as error:
     from bs4 import BeautifulSoup
 
 try:
-   import lxml
+    import lxml
 except ModuleNotFoundError as error:
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'lxml'])
     import lxml
@@ -54,6 +53,7 @@ from requests.exceptions import ConnectionError
 
 def exception_wrapper(exit_mode=True):
     """Wraps the function in oreder to catch an exception, if exit_mode - exits the app and writes an exit message"""
+
     def inner_wrapper(func):
         def wrapper(*args, **kwargs):
             try:
@@ -174,7 +174,7 @@ def read_cache(source=None, date=None, limit=None, cache_file='cache.json'):
 
 
 @exception_wrapper()
-def write_feed(feed_list, writing_mode = None):
+def write_feed(feed_list, writing_mode=None):
     """Prints parsed RSS-feed depending on writing mode:
     if writing_mode is not None - into <<news_feed + posfix depending on current date-time>>.json file
     in json_files folder
@@ -184,8 +184,8 @@ def write_feed(feed_list, writing_mode = None):
     if writing_mode:
         if not os.path.exists('json_files'):
             os.makedirs('json_files')
-        file_name = "json_files/news_feed"+str(datetime.now())
-        file_name=file_name.replace(':','').replace('.','')+'.json'
+        file_name = "json_files/news_feed" + str(datetime.now())
+        file_name = file_name.replace(':', '').replace('.', '') + '.json'
 
         with open(file_name, "w", encoding='utf8') as file:
             json.dump(feed_list, file, ensure_ascii=False, indent=4)
@@ -200,7 +200,7 @@ def write_feed(feed_list, writing_mode = None):
         if feed_list != []:
             for news in feed_list:
                 for key, value in news.items():
-                    if key!='Image source':
+                    if key != 'Image source':
                         print(f'{key + ":":<15} {value}')
                     else:
                         print(f'{key + ":":<15} {value[0][0]}')
@@ -226,15 +226,15 @@ def convert2html(feed_list):
         element = {}
         with open(file_name, 'a', encoding='utf-8') as file:
             for k, v in dictionary.items():
-                if k != 'Image source' and k!='News link':
+                if k != 'Image source' and k != 'News link':
                     element.update({k: v})
             file.write(json2html.convert(json=element, table_attributes=" border='1', width='100%' "))
-
 
             if 'Image source' in dictionary:
                 for image in dictionary['Image source']:
                     try:
-                        file.write(f'<img src="{os.path.dirname(os.path.abspath(__file__))}/{image[1]}" width = "220"><br>')
+                        file.write(
+                            f'<img src="{os.path.dirname(os.path.abspath(__file__))}/{image[1]}" width = "220"><br>')
                         file.write(f'<b>Image source:</b> <tr><td><a href="{image[0]}">{image[0]}</a></td></tr><br>')
 
                     except Exception:
@@ -247,6 +247,7 @@ def convert2html(feed_list):
                 file.write(
                     f'<b>News link     :</b> <tr><td><a href="{dictionary["News link"]}">{dictionary["News link"]}</a></td></tr><br>')
                 file.write('<br>')
+
 
 @exception_wrapper()
 def convert2pdf(feed_list):
@@ -299,10 +300,10 @@ def main_block():
         logging.basicConfig(level=80)
 
     if args.date:
-        feed_list = read_cache(source = args.source, date = args.date, limit = args.limit)
+        feed_list = read_cache(source=args.source, date=args.date, limit=args.limit)
     else:
         allnews = parse_news(args.source)
-        feed_list = cache_feed(allnews,args.source)[:args.limit]
+        feed_list = cache_feed(allnews, args.source)[:args.limit]
         cache_update(allnews, args.source)
 
     if args.tohtml:

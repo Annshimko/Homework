@@ -3,3 +3,4 @@ include rss_reader/DejaVuSerif-Italic.ttf
 include rss_reader/DejaVuSerif-BoldItalic.ttf
 include rss_reader/DejaVuSerif.ttf
 include rss_reader/DejaVu Fonts License.txt
+include requirements.txt
